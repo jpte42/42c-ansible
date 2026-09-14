@@ -1,0 +1,35 @@
+---
+- name: Apply baseline configuration to all hosts
+  hosts: all
+  roles:
+    - { role: common, tags: [common] }
+
+- name: Configure hypervisors
+  hosts: hypervisors
+  roles:
+    - { role: hypervisor, tags: [hypervisor] }
+
+- name: Configure docker hosts
+  hosts: dockerboxes
+  roles:
+    - { role: docker, tags: [docker] }
+
+- name: Configure web servers
+  hosts: webservers
+  roles:
+    - { role: apache, tags: [apache] }
+
+- name: Configure routers
+  hosts: routers
+  roles:
+    - { role: router, tags: [router] }
+
+- name: Configure the monitoring stack
+  hosts: monitoring
+  roles:
+    - { role: elasticsearch, tags: [elasticsearch] }
+    - { role: logstash, tags: [logstash] }
+    - { role: kibana, tags: [kibana] }
+    - { role: prometheus, tags: [prometheus] }
+    - { role: grafana, tags: [grafana] }
+    - { role: nginx, tags: [nginx] }

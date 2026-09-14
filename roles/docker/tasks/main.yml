@@ -1,0 +1,43 @@
+---
+- name: Add Docker APT repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/debian
+    suites: "{{ ansible_distribution_release }}"
+    components: stable
+    signed_by: https://download.docker.com/linux/debian/gpg
+    install_python_debian: true
+
+- name: Install docker
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+# NOTE: the exact daemon.json key for the nftables backend has moved
+# across Docker Engine versions (native nftables support is recent /
+# experimental) — verify against whatever version apt installs here.
+- name: Force docker to use the nftables firewall backend
+  ansible.builtin.copy:
+    content: |
+      {
+        "iptables": true,
+        "firewall-backend": "nftables"
+      }
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker
+
+- name: Ensure docker is running and enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true

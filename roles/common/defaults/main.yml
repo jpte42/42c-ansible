@@ -1,0 +1,17 @@
+---
+# Passwordless sudo/doas — for the ansible automation account only.
+# Human admins use common_admin_group (password required) instead.
+common_automation_group: ansible
+
+common_firewall_rules:
+  - port: 22
+    proto: tcp
+    src: "{{ ssh_allowed_sources | default([]) }}"
+
+# Other roles/groups append here instead of redefining common_firewall_rules
+# directly — self-referencing the same var name across a role default and a
+# group_vars override (e.g. `common_firewall_rules: "{{ common_firewall_rules
+# + [...] }}"`) causes ansible-core to raise "Recursive loop detected in
+# template", since the group_vars definition fully shadows the role default
+# rather than layering over it.
+common_extra_firewall_rules: []

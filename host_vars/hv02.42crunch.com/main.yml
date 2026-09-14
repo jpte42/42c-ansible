@@ -1,0 +1,3 @@
+---
+hypervisor_vlan420_address: 192.168.42.2/29
+hypervisor_vlan422_address: 192.168.42.10/29

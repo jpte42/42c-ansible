@@ -1,0 +1,6 @@
+[server]
+http_addr = 127.0.0.1
+http_port = {{ grafana_port }}
+domain = {{ grafana_domain }}
+root_url = %(protocol)s://%(domain)s{{ grafana_root_path }}/
+serve_from_sub_path = true

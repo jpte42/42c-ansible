@@ -1,0 +1,10 @@
+---
+- name: Restart cockpit socket
+  ansible.builtin.systemd_service:
+    name: cockpit.socket
+    state: restarted
+    daemon_reload: true
+
+- name: Apply netplan
+  ansible.builtin.command: netplan apply
+  changed_when: true

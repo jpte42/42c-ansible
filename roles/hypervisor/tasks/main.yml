@@ -1,0 +1,46 @@
+---
+- name: Install hypervisor management tools
+  ansible.builtin.apt:
+    name:
+      - virt-manager
+      - cockpit
+      - cockpit-machines
+      - btrfs-progs
+    state: present
+    update_cache: true
+
+- name: Ensure cockpit socket override directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/cockpit.socket.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Restrict cockpit to listen on localhost only
+  ansible.builtin.template:
+    src: cockpit-socket-override.conf.j2
+    dest: /etc/systemd/system/cockpit.socket.d/override.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart cockpit socket
+
+- name: Reload systemd unit files
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Ensure cockpit is running and enabled
+  ansible.builtin.service:
+    name: cockpit.socket
+    state: started
+    enabled: true
+
+- name: Deploy internal network netplan configuration
+  ansible.builtin.template:
+    src: 51-internal-network.yaml.j2
+    dest: /etc/netplan/51-internal-network.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Apply netplan

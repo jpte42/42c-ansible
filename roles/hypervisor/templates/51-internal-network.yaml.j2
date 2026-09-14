@@ -1,0 +1,47 @@
+network:
+  version: 2
+  ethernets:
+    eno2np1:
+      dhcp4: false
+      dhcp6: false
+  bridges:
+    42cbr0:
+      interfaces: [vxlan420]
+      dhcp4: no
+      dhcp6: no
+      link-local: []
+      parameters:
+        stp: false
+        forward-delay: 4
+    42cbr1:
+      interfaces: [vxlan422]
+      dhcp4: no
+      dhcp6: no
+      link-local: []
+      parameters:
+        stp: false
+        forward-delay: 4
+  vlans:
+    vlan420:
+      id: 420
+      link: eno2np1
+      addresses:
+        - {{ hypervisor_vlan420_address }}
+    vlan422:
+      id: 422
+      link: eno2np1
+      addresses:
+        - {{ hypervisor_vlan422_address }}
+  tunnels:
+    vxlan420:
+      mode: vxlan
+      id: 420
+      link: vlan420
+      port: 4789
+      remote: 239.1.1.1
+    vxlan422:
+      mode: vxlan
+      id: 422
+      link: vlan422
+      port: 4789
+      remote: 239.1.2.1

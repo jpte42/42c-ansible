@@ -1,0 +1,34 @@
+---
+- name: Add Elastic APT repository
+  ansible.builtin.deb822_repository:
+    name: "elastic-{{ elastic_stack_version }}"
+    types: deb
+    uris: "https://artifacts.elastic.co/packages/{{ elastic_stack_version }}/apt"
+    suites: stable
+    components: main
+    signed_by: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    install_python_debian: true
+
+- name: Install logstash
+  ansible.builtin.apt:
+    name: logstash
+    state: present
+    update_cache: true
+
+# Placeholder pipeline: accepts Beats input, ships to the local
+# Elasticsearch. Replace with real inputs/filters once log sources are
+# decided.
+- name: Deploy logstash pipeline
+  ansible.builtin.template:
+    src: pipeline.conf.j2
+    dest: /etc/logstash/conf.d/monitoring.conf
+    owner: root
+    group: logstash
+    mode: "0640"
+  notify: Restart logstash
+
+- name: Ensure logstash is running and enabled
+  ansible.builtin.service:
+    name: logstash
+    state: started
+    enabled: true

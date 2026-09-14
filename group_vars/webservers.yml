@@ -1,0 +1,4 @@
+---
+common_extra_firewall_rules:
+  - port: 80
+  - port: 443

@@ -1,0 +1,16 @@
+---
+- name: Restart networking
+  ansible.builtin.command: sh /etc/netstart
+  changed_when: true
+
+- name: Reload pf
+  ansible.builtin.command: pfctl -f /etc/pf.conf
+  changed_when: true
+
+- name: Reload relayd
+  ansible.builtin.command: rcctl reload relayd
+  changed_when: true
+
+- name: Reload iked
+  ansible.builtin.command: rcctl reload iked
+  changed_when: true

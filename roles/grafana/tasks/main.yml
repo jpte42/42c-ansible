@@ -1,0 +1,31 @@
+---
+- name: Add Grafana APT repository
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: deb
+    uris: https://apt.grafana.com
+    suites: stable
+    components: main
+    signed_by: https://apt.grafana.com/gpg.key
+    install_python_debian: true
+
+- name: Install grafana
+  ansible.builtin.apt:
+    name: grafana
+    state: present
+    update_cache: true
+
+- name: Configure grafana
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Ensure grafana is running and enabled
+  ansible.builtin.service:
+    name: grafana-server
+    state: started
+    enabled: true

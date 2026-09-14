@@ -1,0 +1,23 @@
+---
+- name: Install prometheus
+  ansible.builtin.apt:
+    name: prometheus
+    state: present
+    update_cache: true
+
+- name: Bind prometheus to localhost only
+  ansible.builtin.lineinfile:
+    path: /etc/default/prometheus
+    regexp: "^ARGS="
+    line: 'ARGS="--web.listen-address={{ prometheus_listen_address }}"'
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart prometheus
+
+- name: Ensure prometheus is running and enabled
+  ansible.builtin.service:
+    name: prometheus
+    state: started
+    enabled: true

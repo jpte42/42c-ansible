@@ -1,0 +1,11 @@
+input {
+  beats {
+    port => {{ logstash_beats_port }}
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://127.0.0.1:9200"]
+  }
+}

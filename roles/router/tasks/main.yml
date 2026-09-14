@@ -1,0 +1,61 @@
+---
+- name: Enable IP forwarding
+  ansible.posix.sysctl:
+    name: net.inet.ip.forwarding
+    value: "1"
+    sysctl_file: /etc/sysctl.conf
+    reload: true
+
+- name: Configure interfaces
+  ansible.builtin.copy:
+    content: "{{ item.value }}"
+    dest: "/etc/hostname.{{ item.key }}"
+    owner: root
+    group: wheel
+    mode: "0644"
+  loop: "{{ router_interfaces | dict2items }}"
+  notify: Restart networking
+
+# Hand-written per-host, not generated — see the Firewall section of
+# .claude/ansible.md for why. Add files/pf/<hostname>.conf once a real
+# router host exists.
+- name: Deploy pf.conf
+  ansible.builtin.copy:
+    src: "pf/{{ inventory_hostname }}.conf"
+    dest: /etc/pf.conf
+    owner: root
+    group: wheel
+    mode: "0600"
+    validate: "pfctl -nf %s"
+  notify: Reload pf
+
+- name: Deploy relayd.conf
+  ansible.builtin.copy:
+    src: "relayd/{{ inventory_hostname }}.conf"
+    dest: /etc/relayd.conf
+    owner: root
+    group: wheel
+    mode: "0600"
+  notify: Reload relayd
+
+# iked.conf holds PSKs/private key material, so it comes from a
+# sops-encrypted host_vars variable rather than a plain files/ copy.
+- name: Deploy iked.conf
+  ansible.builtin.copy:
+    content: "{{ iked_conf }}"
+    dest: /etc/iked.conf
+    owner: root
+    group: wheel
+    mode: "0600"
+  notify: Reload iked
+
+- name: Enable pf, relayd and iked services
+  ansible.builtin.command: "rcctl enable {{ item }}"
+  loop: [pf, relayd, iked]
+  changed_when: false
+
+- name: Ensure pf, relayd and iked are running
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+  loop: [pf, relayd, iked]

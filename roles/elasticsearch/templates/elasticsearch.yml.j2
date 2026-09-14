@@ -1,0 +1,7 @@
+cluster.name: monitoring
+node.name: "{{ inventory_hostname }}"
+network.host: 127.0.0.1
+http.port: {{ elasticsearch_http_port }}
+discovery.type: single-node
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch

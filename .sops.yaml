@@ -1,0 +1,7 @@
+keys:
+  - &admin age1qz3q8fgmmp7wypvfhxd8enfuuu9g24evdzwn8vpe5d4tej7y2elqx9v44p
+creation_rules:
+  - path_regex: (group_vars|host_vars)/.*\.sops\.ya?ml$
+    key_groups:
+      - age:
+          - *admin

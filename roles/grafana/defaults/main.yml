@@ -1,0 +1,4 @@
+---
+grafana_port: 3000
+grafana_root_path: /grafana
+grafana_domain: monitoring.intranet.42crunch.com

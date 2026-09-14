@@ -1,0 +1,11 @@
+---
+hypervisor_cockpit_listen_address: 127.0.0.1
+hypervisor_cockpit_listen_port: 9090
+
+# Per-host addresses for the vlan420/vlan422 interfaces in the internal
+# network netplan config (see templates/51-internal-network.yaml.j2).
+# Define per host in host_vars/<host>/main.yml, e.g.:
+#   hypervisor_vlan420_address: 192.168.42.2/29
+#   hypervisor_vlan422_address: 192.168.42.10/29
+hypervisor_vlan420_address: ""
+hypervisor_vlan422_address: ""

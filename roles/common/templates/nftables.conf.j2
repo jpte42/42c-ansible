@@ -1,0 +1,27 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+
+        iif "lo" accept
+        ct state invalid drop
+        ct state established,related accept
+        icmp type { echo-request, destination-unreachable, time-exceeded } accept
+        icmpv6 type { echo-request, destination-unreachable, packet-too-big, time-exceeded, parameter-problem, nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } accept
+
+{% for rule in _common_firewall_rules %}
+        {{ rule.proto }} dport {{ rule.port }}{% if rule.src | length > 0 %} ip saddr { {{ rule.src | join(", ") }} }{% endif %} accept
+{% endfor %}
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}

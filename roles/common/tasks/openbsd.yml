@@ -1,0 +1,48 @@
+---
+- name: Install common packages
+  community.general.openbsd_pkg:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Create admin group
+  ansible.builtin.group:
+    name: "{{ common_admin_group }}"
+    state: present
+
+- name: Create automation group
+  ansible.builtin.group:
+    name: "{{ common_automation_group }}"
+    state: present
+
+- name: Create admin users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.group | default(common_admin_group) }}"
+    append: true
+    shell: /bin/ksh
+    password: "{{ item.password_hash | default(omit, true) }}"
+  loop: "{{ admin_users | default([]) }}"
+
+- name: Deploy admin SSH authorized keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_keys | join('\n') }}"
+  loop: "{{ admin_users | default([]) }}"
+
+- name: Configure doas (password for admins, passwordless for automation)
+  ansible.builtin.template:
+    src: doas.conf.j2
+    dest: /etc/doas.conf
+    owner: root
+    group: wheel
+    mode: "0640"
+    validate: "doas -C %s"
+
+- name: Ensure ntpd is running
+  ansible.builtin.service:
+    name: ntpd
+    state: started
+    enabled: true
+
+# No firewall tasks here: every OpenBSD host is a router, and the
+# router role owns pf/relayd/iked entirely (see roles/router).

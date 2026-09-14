@@ -1,0 +1,5 @@
+---
+common_admin_group: wheel
+common_packages:
+  - curl
+  - vim

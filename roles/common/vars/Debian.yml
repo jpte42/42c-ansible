@@ -1,0 +1,8 @@
+---
+common_admin_group: sudo
+common_packages:
+  - curl
+  - vim
+  - unattended-upgrades
+  - nftables
+  - fdisk

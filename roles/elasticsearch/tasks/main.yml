@@ -1,0 +1,31 @@
+---
+- name: Add Elastic APT repository
+  ansible.builtin.deb822_repository:
+    name: "elastic-{{ elastic_stack_version }}"
+    types: deb
+    uris: "https://artifacts.elastic.co/packages/{{ elastic_stack_version }}/apt"
+    suites: stable
+    components: main
+    signed_by: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    install_python_debian: true
+
+- name: Install elasticsearch
+  ansible.builtin.apt:
+    name: elasticsearch
+    state: present
+    update_cache: true
+
+- name: Configure elasticsearch to bind to localhost only
+  ansible.builtin.template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: root
+    group: elasticsearch
+    mode: "0640"
+  notify: Restart elasticsearch
+
+- name: Ensure elasticsearch is running and enabled
+  ansible.builtin.service:
+    name: elasticsearch
+    state: started
+    enabled: true

@@ -1,0 +1,9 @@
+---
+common_extra_firewall_rules:
+  - port: 80
+  - port: 443
+
+# Shared across the elasticsearch/logstash/kibana roles (same Elastic
+# apt repo) — defined once here rather than in each role's defaults to
+# avoid the three drifting apart.
+elastic_stack_version: "8.x"

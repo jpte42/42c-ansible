@@ -1,0 +1,16 @@
+---
+ssh_allowed_sources: []   # TODO: fill in, e.g. ['203.0.113.0/24'] — restricts common's baseline SSH rule
+
+admin_users:
+  - name: ansible
+    group: "{{ common_automation_group }}"   # passwordless sudo/doas
+    ssh_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEarVQ9t0vH4wxIjRGUPLuanoWKhnJDfSpDiKiu//fje ansible@devops"
+  - name: jp
+    group: "{{ common_admin_group }}"        # password-required sudo/doas
+    ssh_keys:
+      - "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIIfpx998ZOl833Cxw0ZQj7rvXMa2bqyAWczZNlm+qHgPAAAABHNzaDo= jp@legba"
+    # Real hash lives in the sops-encrypted admin_password_hashes (see
+    # group_vars/all/secrets.sops.yaml) — never put a hash in this
+    # plaintext file.
+    password_hash: "{{ (admin_password_hashes | default({})).jp | default('') }}"

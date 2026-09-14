@@ -1,0 +1,9 @@
+---
+# VXLAN traffic (vlan420/vlan422 tunnels, see the hypervisor role) between
+# hypervisors' internal-network subnets.
+common_extra_firewall_rules:
+  - port: 4789
+    proto: udp
+    src:
+      - 192.168.42.0/29
+      - 192.168.42.8/29

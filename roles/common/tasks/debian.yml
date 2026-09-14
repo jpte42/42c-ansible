@@ -1,0 +1,93 @@
+---
+- name: Install common packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+    update_cache: true
+
+- name: Enable unattended-upgrades
+  ansible.builtin.copy:
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure unattended-upgrades is running
+  ansible.builtin.service:
+    name: unattended-upgrades
+    state: started
+    enabled: true
+
+- name: Create admin group
+  ansible.builtin.group:
+    name: "{{ common_admin_group }}"
+    state: present
+
+- name: Create automation group
+  ansible.builtin.group:
+    name: "{{ common_automation_group }}"
+    state: present
+
+- name: Create admin users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.group | default(common_admin_group) }}"
+    append: true
+    shell: /bin/bash
+    password: "{{ item.password_hash | default(omit, true) }}"
+  loop: "{{ admin_users | default([]) }}"
+
+- name: Deploy admin SSH authorized keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_keys | join('\n') }}"
+  loop: "{{ admin_users | default([]) }}"
+
+- name: Allow automation users passwordless sudo
+  ansible.builtin.copy:
+    content: "{{ item.name }} ALL = (ALL) NOPASSWD:ALL\n"
+    dest: "/etc/sudoers.d/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
+  loop: "{{ admin_users | default([]) }}"
+  when: (item.group | default(common_admin_group)) == common_automation_group
+
+# The rendered ruleset is loaded into the kernel with a single atomic
+# `nft -f`, so unlike incremental firewall-cli calls there's no window
+# where the input policy is dropping without the SSH allow rule in place.
+#
+# src normalizes to an empty list for "any" (no restriction) rather than
+# ['any'] — nftables.conf.j2 only emits an `ip saddr { ... }` clause when
+# src is non-empty, since `any` isn't a real address and `nft` would try
+# (and fail) to resolve it as a hostname.
+- name: Normalize firewall rules (default src to any, proto to tcp)
+  ansible.builtin.set_fact:
+    _common_firewall_rules: >-
+      {{ _common_firewall_rules | default([]) + [{
+        'port': item.port,
+        'proto': item.proto | default('tcp'),
+        'src': ([item.src] if item.src is string else item.src)
+               if (item.src is defined and item.src) else [],
+      }] }}
+  loop: "{{ common_firewall_rules + common_extra_firewall_rules }}"
+
+- name: Deploy nftables ruleset
+  ansible.builtin.template:
+    src: nftables.conf.j2
+    dest: /etc/nftables.conf
+    owner: root
+    group: root
+    mode: "0640"
+    validate: "nft -c -f %s"
+  notify: Reload nftables
+
+- name: Ensure nftables is enabled and running
+  ansible.builtin.service:
+    name: nftables
+    state: started
+    enabled: true
